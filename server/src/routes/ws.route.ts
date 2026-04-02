@@ -1,5 +1,7 @@
 import { Elysia } from "elysia";
 import { addWsClient, removeWsClient } from "../services/ws.service";
+import { cleanupLogFollow, handleLogFollowMessage } from "../services/log-follow.service";
+import type { LogFollowClientMessage } from "../types/log";
 
 // ── WebSocket 라우트 ───────────────────────────────────────────────────────────
 // WS /ws
@@ -22,9 +24,24 @@ export const wsRoute = new Elysia().ws("/ws", {
     );
   },
 
+  async message(ws, message) {
+    try {
+      const payload = typeof message === "string"
+        ? JSON.parse(message) as LogFollowClientMessage
+        : message as LogFollowClientMessage;
+
+      if (payload.type === "log_follow_start" || payload.type === "log_follow_stop") {
+        await handleLogFollowMessage(ws, payload);
+      }
+    } catch {
+      // 로그 follow 외 메시지는 현재 무시
+    }
+  },
+
   // 연결 종료 시: 클라이언트를 목록에서 제거
   // 이후 broadcast 시 이 클라이언트에게는 전송하지 않음
   close(ws) {
+    cleanupLogFollow(ws);
     removeWsClient(ws);
   },
 });
