@@ -16,6 +16,12 @@ export function MemoryPanel() {
   const usedBytes  = useMetricEntry("mem.used_bytes")?.latest      ?? null;
   const availBytes = useMetricEntry("mem.available_bytes")?.latest ?? null;
   const swapBytes  = useMetricEntry("mem.swap_used_bytes")?.latest ?? null;
+  const totalBytes = usedBytes !== null && availBytes !== null
+    ? usedBytes + availBytes
+    : null;
+  const memorySummary = usedBytes !== null && totalBytes !== null
+    ? `${formatBytes(usedBytes)} / ${formatBytes(totalBytes)}`
+    : "—";
 
   return (
     <div className="panel">
@@ -23,6 +29,11 @@ export function MemoryPanel() {
         <div>
           <p className="eyebrow">Memory</p>
           <h2 className="panel-title">RAM Usage</h2>
+        </div>
+
+        <div className="memory-header-summary" aria-label="사용 중 메모리와 총 메모리">
+          <span className="memory-header-summary__label">Used / Total</span>
+          <strong className="memory-header-summary__value">{memorySummary}</strong>
         </div>
       </div>
 
