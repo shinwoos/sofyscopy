@@ -11,6 +11,7 @@ import { DiskPanel }  from "./components/DiskPanel";
 import { NetworkPanel } from "./components/NetworkPanel";
 import { ProcessPanel } from "./components/ProcessPanel";
 import { ContainerPanel } from "./components/ContainerPanel";
+import { LogPanel } from "./components/LogPanel";
 import type { Server, ServerStatus } from "./store/serverStore";
 import type { ContainerSnapshot, ProcessSnapshot } from "./types/process";
 
@@ -184,6 +185,7 @@ export default function App() {
             <NetworkPanel />
             <ProcessPanel />
             <ContainerPanel />
+            <LogPanel />
           </div>
         </div>
       </div>
