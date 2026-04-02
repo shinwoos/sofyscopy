@@ -35,6 +35,15 @@ export const PROCESS_COLLECT_INTERVAL_MS = 5000;
 export const CONTAINER_COLLECT_INTERVAL_MS = 5000;
 export const PROCESS_TOP_N = 10;
 
+// 로그 파일 조회 정책
+// 기본값은 로컬/사설망 도구 성격에 맞춰 임의 경로 허용
+// 외부 노출 모드로 바뀌면 false로 두고 allowlist를 사용하는 편이 안전
+export const LOG_ALLOW_ANY_PATH = (Bun.env.LOG_ALLOW_ANY_PATH ?? "true") === "true";
+export const LOG_ALLOWED_PATHS = (Bun.env.LOG_ALLOWED_PATHS ?? "/var/log")
+  .split(",")
+  .map((value) => value.trim())
+  .filter(Boolean);
+
 // 데이터 prune 실행 주기 (ms) — 1시간마다 만료 데이터 삭제
 export const PRUNE_INTERVAL_MS = 60 * 60 * 1000;
 
