@@ -1,0 +1,16 @@
+{
+  "name": "devscope",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "concurrently -n server,frontend -c cyan,magenta \"bun run --cwd server dev\" \"bun run --cwd frontend dev\"",
+    "build": "bun run --cwd frontend build",
+    "start": "bun run --cwd server start"
+  },
+  "dependencies": {
+    "systeminformation": "^5.31.5"
+  },
+  "devDependencies": {
+    "concurrently": "^9.0.0"
+  }
+}
