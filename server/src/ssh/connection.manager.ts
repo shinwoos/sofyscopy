@@ -1,5 +1,5 @@
 import { Client } from "ssh2";
-import type { ConnectConfig } from "ssh2";
+import type { ClientChannel, ConnectConfig } from "ssh2";
 import { updateServerStatus } from "../db/servers.repository";
 import { broadcastServerStatus } from "../services/ws.service";
 import type { BastionAuthType, ServerRow } from "../types/server";
@@ -260,6 +260,96 @@ export function exec(serverId: string, command: string): Promise<string> {
       stream.stderr.on("data", () => {});   // stderr 무시
       stream.on("close",  () => resolve(output));
       stream.on("error",  (e: Error) => reject(e));
+    });
+  });
+}
+
+export function execWithStatus(serverId: string, command: string): Promise<{
+  stdout: string;
+  stderr: string;
+  code: number | null;
+  signal: string | null;
+}> {
+  return new Promise((resolve, reject) => {
+    const managed = pool.get(serverId);
+    if (!managed?.ready) {
+      reject(new Error(`SSH not connected: ${serverId}`));
+      return;
+    }
+
+    managed.client.exec(command, (err, stream) => {
+      if (err) {
+        reject(err);
+        return;
+      }
+
+      let stdout = "";
+      let stderr = "";
+
+      stream.on("data", (data: Buffer) => {
+        stdout += data.toString();
+      });
+      stream.stderr.on("data", (data: Buffer) => {
+        stderr += data.toString();
+      });
+      stream.on("close", (code: number | undefined, signal: string | undefined) => {
+        resolve({
+          stdout,
+          stderr,
+          code: code ?? null,
+          signal: signal ?? null,
+        });
+      });
+      stream.on("error", (error: Error) => {
+        reject(error);
+      });
+    });
+  });
+}
+
+export function execStreaming(
+  serverId: string,
+  command: string,
+  handlers: {
+    onStdout?: (chunk: string) => void;
+    onStderr?: (chunk: string) => void;
+    onClose?: (code: number | null, signal: string | null) => void;
+    onError?: (error: Error) => void;
+  },
+): Promise<{ stop: () => void }> {
+  return new Promise((resolve, reject) => {
+    const managed = pool.get(serverId);
+    if (!managed?.ready) {
+      reject(new Error(`SSH not connected: ${serverId}`));
+      return;
+    }
+
+    managed.client.exec(command, (err, stream) => {
+      if (err) {
+        reject(err);
+        return;
+      }
+
+      const channel = stream as ClientChannel;
+
+      channel.on("data", (data: Buffer) => {
+        handlers.onStdout?.(data.toString());
+      });
+      channel.stderr.on("data", (data: Buffer) => {
+        handlers.onStderr?.(data.toString());
+      });
+      channel.on("close", (code: number | undefined, signal: string | undefined) => {
+        handlers.onClose?.(code ?? null, signal ?? null);
+      });
+      channel.on("error", (error: Error) => {
+        handlers.onError?.(error);
+      });
+
+      resolve({
+        stop: () => {
+          channel.close();
+        },
+      });
     });
   });
 }
