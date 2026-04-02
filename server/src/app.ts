@@ -1,6 +1,7 @@
 import { Elysia } from "elysia";
 import { join } from "node:path";
 import { healthRoute } from "./routes/health.route";
+import { logsRoute } from "./routes/logs.route";
 import { metricsRoute } from "./routes/metrics.route";
 import { wsRoute } from "./routes/ws.route";
 import { serversRoute } from "./routes/servers.route";
@@ -13,6 +14,7 @@ const FRONTEND_DIST = join(import.meta.dir, "../../frontend/dist");
 export function createApp() {
   return new Elysia()
     .use(healthRoute)   // GET /health
+    .use(logsRoute)     // GET /api/logs/recent
     .use(metricsRoute)  // GET /api/metrics/*
     .use(wsRoute)       // WS  /ws
     .use(serversRoute)  // GET/POST/DELETE /api/servers
